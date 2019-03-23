@@ -65,12 +65,13 @@ class LTrader:
             alphaf = 0.05
             Ft = market.RecordList[time - 1][1] * (1 + 0.0001) * (1 + self.epsilon)
             direction = alphaf * (Ft - market.RecordList[time - 1][0]) + self.epsilon
+        # 0表示买入，1表示卖出
         if direction > 0:
             order.direction = 0
         else:
             order.direction = 1
             # order price
-        order.price = market.RecordList[time - 1][0] * (1 + 0.0001) * (1 + self.priceEps)
+        order.price = round(market.RecordList[time - 1][0] * (1 + 0.0001) * (1 + self.priceEps),2)
         # order quantity
         order.quantity = abs(direction)
         # 与财富相关的判断，卖出的股票数不能多于现在持有的股票数，买入花费的现金数不能超过现有的现金
@@ -81,8 +82,9 @@ class LTrader:
             # 买入
             if order.quantity * order.price > self.cash:
                 order.quantity = self.cash / order.price
+        order.quantity = round(order.quantity,2)
         # order time
-        order.time = market.time + random.uniform(0, 1)
+        order.time = round(market.time + random.uniform(0, 1),2)
         # print(order.traderId,order.traderType,order.time,order.direction,order.price,order.quantity,order.suspendTime)
         self.ownOrders.append(order)
         self.suspendTime -= 1
@@ -126,22 +128,28 @@ class HTrader:
         # print('The direction of this trader is :',direction)
         if direction > 0.5:
             order.direction = 0
+            #0表示买入，搜索的是对向的截个列表
             best = market.AskList.sort_values(['price', 'time'], ascending=False)[0:1]['price']
         else:
             order.direction = 1
             best = market.BidList.sort_values(['price', 'time'])[0:1]['price']
         # order suspend time,高频的这个值为1，因此只要当前没有匹配成功，就会撤单并在下一轮重新参与，高频参与者每轮都会参与
         order.suspendTime = self.suspendTime
+        #order.suspendTime = 1
         # order price
-        order.price = float(best) * (1 + self.priceDis)
+        order.price = round(float(best) * (1 + self.priceDis),2)
         # !order quantity
         meanParamater = 0.625
         marketQuantity = market.mes(direction)
-        order.quantity = marketQuantity * meanParamater * random.random()
+        #order.quantity = marketQuantity * meanParamater * random.random()
+        order.quantity = marketQuantity * meanParamater
         # 持仓限制
         if order.quantity + self.stock > marketQuantity / 4:
             order.quantity = marketQuantity / 4
         # print(order.traderId,order.traderType,order.direction,order.price,order.quantity,order.suspendTime)
+        order.quantity = round(order.quantity,2)
+        #高频的订单的提交时间
+        order.time = round(market.time + random.uniform(0, 1),2)
         return order
 
     # 订单方向判断

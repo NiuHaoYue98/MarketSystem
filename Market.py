@@ -27,8 +27,6 @@ class Market:
     # TODO :fee of cancel
 
     # 历史记录
-    # RecordList={time:[marketPrice, fundamentalPrice,[[id,price,sellerTypr,buyerType,volumn],[id,price,sellerTypr,buyerType,volumn]]]}
-    # RecordList = {0:[100,102,[[0,101,0,1,35],[1,103,0,0,29]]],1:[100,102,[[0,101,0,1,35],[1,103,0,0,29]]]}
     RecordList = {}
 
     #初始化市场结构
@@ -45,7 +43,7 @@ class Market:
         self.time = 0
         self.askOrders = 0
         self.bidOrders = 0
-        self.writer = pd.ExcelWriter("F:/南京大学(备份)/创新项目/开始正经干活啦/MarketRecords.xlsx", engine='xlsxwriter')
+        #self.writer = pd.ExcelWriter("./MarketRecords.xlsx", engine='xlsxwriter')
 
     # 初始化交易者
     def initTraders(self, ChartTraders, FundTraders, HTraders, time):
@@ -56,19 +54,19 @@ class Market:
         LowLatencyFactor = np.random.randint(10, 40, [1, lownum])  # numpy.ndarray
         chartnum = random.randint(0, lownum)
         fundnum = lownum - chartnum
-        df1 = pd.DataFrame({'Time': [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")], 'LFT-Num': [self.LFTnum],
-                            'HFT-Num': [self.HFTnum], 'Round': [time], 'Chart-Num': [chartnum], 'Fund-Num': [fundnum]})
-        #print(df1)
-        df1.to_excel(self.writer, sheet_name='MarketMessage')
+        # df1 = pd.DataFrame({'Time': [datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")], 'LFT-Num': [self.LFTnum],
+        #                     'HFT-Num': [self.HFTnum], 'Round': [time], 'Chart-Num': [chartnum], 'Fund-Num': [fundnum]})
+        # print(df1)
+        # df1.to_excel(self.writer, sheet_name='MarketMessage')
         ChartEpsilon = np.random.normal(0, 1, [1, chartnum])
         FundamentalEpsilon = np.random.normal(0, 0.5, [1, lownum - chartnum])
         PriceEps = np.random.normal(0, 0.01, [1, lownum])
-        df21 = pd.DataFrame(LowLatencyFactor.T, columns=['LatencyFactor'])
-        df22 = pd.DataFrame(ChartEpsilon.T, columns=['ChartEps'])
-        df23 = pd.DataFrame(FundamentalEpsilon.T, columns=['FundEps'])
-        df24 = pd.DataFrame(PriceEps.T, columns=['PriceEps'])
-        df2 = pd.concat([df21, df22, df23, df24], axis=1)
-        df2.to_excel(self.writer, sheet_name="LowTradersMessage")
+        # df21 = pd.DataFrame(LowLatencyFactor.T, columns=['LatencyFactor'])
+        # df22 = pd.DataFrame(ChartEpsilon.T, columns=['ChartEps'])
+        # df23 = pd.DataFrame(FundamentalEpsilon.T, columns=['FundEps'])
+        # df24 = pd.DataFrame(PriceEps.T, columns=['PriceEps'])
+        # df2 = pd.concat([df21, df22, df23, df24], axis=1)
+        # df2.to_excel(self.writer, sheet_name="LowTradersMessage")
         print("The chart num is ", chartnum)
         for chart in range(0, chartnum):
             # 初始化图表交易者
@@ -83,11 +81,11 @@ class Market:
         # 高频交易者
         threshold = np.random.uniform(0, 0.01, [1, self.HFTnum])  # 激活因子
         priceDis = np.random.uniform(0, 0.01, [1, self.HFTnum])  # 价格波动
-        df31 = pd.DataFrame(threshold.T, columns=['Threshold'])
-        df32 = pd.DataFrame(priceDis.T, columns=['PriceDis'])
-        df3 = pd.concat([df31, df32], axis=1)
-        df3.to_excel(self.writer, sheet_name='HighTradersMessage')
-        self.writer.save()
+        # df31 = pd.DataFrame(threshold.T, columns=['Threshold'])
+        # df32 = pd.DataFrame(priceDis.T, columns=['PriceDis'])
+        # df3 = pd.concat([df31, df32], axis=1)
+        # df3.to_excel(self.writer, sheet_name='HighTradersMessage')
+        # self.writer.save()
 
         print('The high frequancy num is: ', self.HFTnum)
         for hf in range(0, self.HFTnum):
@@ -104,16 +102,26 @@ class Market:
             if order == None:
                 continue
             if order.direction == 0:
-                self.AskList.loc[self.askOrders] = [order.price, order.time, order.traderType, order.traderId,
-                                                    order.quantity, order.suspendTime]
+                self.AskList.loc[self.askOrders] = [order.price, order.time, order.traderType, order.traderId,order.quantity, order.suspendTime]
                 self.askOrders += 1
             else:
-                self.BidList.loc[self.bidOrders] = [order.price, order.time, order.traderType, order.traderId,
-                                                    order.quantity, order.suspendTime]
+                self.BidList.loc[self.bidOrders] = [order.price, order.time, order.traderType, order.traderId,order.quantity, order.suspendTime]
                 self.bidOrders += 1
             # break   #debug
         for f in self.FundTraders.values():
             order = f.generateOrder(self)
+            if order == None:
+                continue
+            if order.direction == 0:
+                self.AskList.loc[self.askOrders] = [order.price, order.time, order.traderType, order.traderId,order.quantity, order.suspendTime]
+                self.askOrders += 1
+            else:
+                self.BidList.loc[self.bidOrders] = [order.price, order.time, order.traderType, order.traderId,order.quantity, order.suspendTime]
+                self.bidOrders += 1
+            # break   #debug
+            # self.HFTpreOrders()
+        for hf in self.HTraders.values():
+            order = hf.generateOrder(self)
             if order == None:
                 continue
             if order.direction == 0:
@@ -125,20 +133,6 @@ class Market:
                                                     order.quantity, order.suspendTime]
                 self.bidOrders += 1
             # break   #debug
-            # self.HFTpreOrders()
-        # for hf in self.HTraders.values():
-        #     order = hf.generateOrder(self)
-        #     if order == None:
-        #         continue
-        #     if order.direction == 0:
-        #         self.AskList.loc[self.askOrders] = [order.price, order.time, order.traderType, order.traderId,
-        #                                             order.quantity, order.suspendTime]
-        #         self.askOrders += 1
-        #     else:
-        #         self.BidList.loc[self.bidOrders] = [order.price, order.time, order.traderType, order.traderId,
-        #                                             order.quantity, order.suspendTime]
-        #         self.bidOrders += 1
-        #     # break   #debug
         self.time += 1
 
     def HFTpreOrders(self):
@@ -188,7 +182,7 @@ class Market:
                     # 成交，加入到历史记录中
                     price = (ask[1][0] + bid[1][0]) / 2
                     quantity = min(ask[1][4], bid[1][4])
-                    deal = Orders.Deal(ask[1][3], bid[1][3], quantity, price)
+                    deal = Orders.Deal(ask[1][3], bid[1][3], quantity, price,self.time)
                     deals.append(deal)
                     # print('The price of this deal is :',price)
                     # 订单变化，交易者财富更新

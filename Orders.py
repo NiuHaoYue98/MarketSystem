@@ -61,9 +61,11 @@ class Deal:
     buyerNameme = ''
     quantity = ''
     price = 0
+    time = 0
 
-    def __init__(self, sellerName, buyerName, quantity, price):
+    def __init__(self, sellerName, buyerName, quantity, price,time):
         self.sellerName = sellerName
         self.buyerName = buyerName
         self.quantity = quantity
         self.price = price
+        self.time = time
